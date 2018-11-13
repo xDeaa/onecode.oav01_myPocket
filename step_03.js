@@ -1,10 +1,11 @@
 const port = parseInt(process.argv[2],10) || 4242;
 const {existsSync} = require('fs');
 const path = require('path')
-const dbPath = path.resolve(__dirname, 'db_Step02')
+const dbPath = path.resolve(__dirname, 'db_Step03')
 let sqlite3 = require('sqlite3').verbose();
 let db = new sqlite3.Database(dbPath);
-var dbPrepare;
+var dbPrepareUser;
+var dbPrepareLink;
 
 
 
@@ -15,10 +16,18 @@ db.serialize(function() {
       nickname VARCHAR(100) NOT NULL,
       email VARCHAR(100) NOT NULL,
       password VARCHAR(100) NOT NULL)`);
-    dbPrepare = db.prepare("INSERT INTO users (nickname,email,password) VALUES (?,?,?)");
-    dbPrepare.run("Andrea", "andrea@node.js","NodeJs");
-
+    dbPrepareUser = db.prepare("INSERT INTO users (nickname,email,password) VALUES (?,?,?)");
+    dbPrepareUser.run("Andrea", "andrea@node.js","NodeJs");
+    db.run(`CREATE TABLE IF NOT EXISTS link(
+           id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+           tags VARCHAR(100),
+           url VARCHAR(100) ,
+           user_link INTEGER,
+           FOREIGN KEY(user_link) REFERENCES users(id))`);
+   dbPrepareLink = db.prepare("INSERT INTO link (tags,url,user_link) VALUES (?,?,?)");
+   dbPrepareLink.run('TEST','test.fr',1);
   }
+
 });
 
 
@@ -51,7 +60,7 @@ restapi.get(`/users/:id`, function(req, res){
 
 restapi.post('/users', function(req, res){
 
-  dbPrepare.run(`${req.query.nickname}`,`${req.query.email}`,`${req.query.password}`)
+  dbPrepareUser.run(`${req.query.nickname}`,`${req.query.email}`,`${req.query.password}`)
   res.write(`The new user ${req.query.nickname} is succefully register in the database`)
   res.end();
 
